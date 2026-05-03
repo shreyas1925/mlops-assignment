@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-test-train:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: "${{ github.workspace }}/src:${{ github.workspace }}"
+      MPLCONFIGDIR: "${{ github.workspace }}/artifacts/.matplotlib"
+      XDG_CACHE_HOME: "${{ github.workspace }}/artifacts/.cache"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint
+        run: |
+          ruff check .
+
+      - name: Test
+        run: |
+          pytest -q
+
+      - name: Run training pipeline
+        run: |
+          python scripts/run_training_pipeline.py
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-artifacts
+          path: |
+            artifacts/models
+            artifacts/reports
+            artifacts/mlruns
+

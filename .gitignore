@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Generated artifacts
+artifacts/
+
+.venv

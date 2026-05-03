@@ -1,0 +1,15 @@
+pandas
+numpy
+scikit-learn
+mlflow
+fastapi
+uvicorn[standard]
+pydantic
+joblib
+matplotlib
+seaborn
+pytest
+httpx
+ruff
+python-dotenv
+prometheus-client
