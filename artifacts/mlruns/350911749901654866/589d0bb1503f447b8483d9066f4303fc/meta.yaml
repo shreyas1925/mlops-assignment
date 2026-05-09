@@ -4,6 +4,7 @@ entry_point_name: ''
 experiment_id: '350911749901654866'
 lifecycle_stage: active
 run_id: 589d0bb1503f447b8483d9066f4303fc
+run_uuid: 589d0bb1503f447b8483d9066f4303fc
 run_name: logistic_regression
 source_name: ''
 source_type: 4

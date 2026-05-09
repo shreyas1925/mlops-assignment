@@ -24,28 +24,48 @@ from settings import (
 
 
 def _make_mlruns_portable(mlruns_dir) -> None:
-    """Rewrite absolute host paths in MLflow tracking files to a container-portable URI.
+    """Make MLflow tracking files compatible with the dockerized MLflow UI.
 
-    MLflow records the absolute filesystem URI of the tracking dir inside meta.yaml/MLmodel
-    files, which breaks the dockerized MLflow UI (it mounts mlruns at /mlruns). We rewrite
-    every occurrence of the host path to file:///mlruns so the same artifacts work locally
-    and inside the container without re-training.
+    Two normalisations:
+    1. Rewrite absolute host paths to file:///mlruns (the path inside the mlflow container).
+    2. Ensure every run meta.yaml carries both run_id and run_uuid so that older/newer
+       MLflow server code paths can both parse it (RunInfo.from_dictionary requires run_uuid).
     """
     host_uri = mlruns_dir.resolve().as_uri()
     container_uri = "file:///mlruns"
-    if host_uri == container_uri:
-        return
-    for meta_path in mlruns_dir.rglob("*"):
-        if not meta_path.is_file():
+
+    for path in mlruns_dir.rglob("*"):
+        if not path.is_file():
             continue
-        if meta_path.name not in {"meta.yaml", "MLmodel"}:
+        if path.name not in {"meta.yaml", "MLmodel"}:
             continue
         try:
-            text = meta_path.read_text(encoding="utf-8")
+            text = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
-        if host_uri in text:
-            meta_path.write_text(text.replace(host_uri, container_uri), encoding="utf-8")
+        new_text = text
+        if host_uri != container_uri and host_uri in new_text:
+            new_text = new_text.replace(host_uri, container_uri)
+        if path.name == "meta.yaml":
+            run_id_value = None
+            has_run_uuid = False
+            for line in new_text.splitlines():
+                if line.startswith("run_id:") and run_id_value is None:
+                    run_id_value = line.split(":", 1)[1].strip()
+                if line.startswith("run_uuid:"):
+                    has_run_uuid = True
+            if run_id_value and not has_run_uuid:
+                lines = new_text.splitlines(keepends=True)
+                inserted = False
+                rebuilt = []
+                for line in lines:
+                    rebuilt.append(line)
+                    if line.startswith("run_id:") and not inserted:
+                        rebuilt.append(f"run_uuid: {run_id_value}\n")
+                        inserted = True
+                new_text = "".join(rebuilt)
+        if new_text != text:
+            path.write_text(new_text, encoding="utf-8")
 
 
 def main() -> None:

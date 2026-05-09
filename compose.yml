@@ -83,7 +83,7 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        pip install --quiet --no-cache-dir 'mlflow==2.16.2' &&
+        pip install --quiet --no-cache-dir 'mlflow==3.1.4' &&
         exec mlflow ui --backend-store-uri file:///mlruns --host 0.0.0.0 --port 5000
     restart: unless-stopped
 

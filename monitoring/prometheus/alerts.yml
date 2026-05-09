@@ -18,3 +18,12 @@ groups:
         annotations:
           summary: "No /predict traffic"
           description: "Predict endpoint has near-zero traffic for 10 minutes."
+
+      - alert: ApiTrafficSpike
+        expr: sum(rate(api_requests_total[1m])) > 5
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Traffic spike on heart-disease-api"
+          description: "API is receiving more than 5 requests/second sustained over 30 seconds. Likely a load test or unusual client behaviour."
