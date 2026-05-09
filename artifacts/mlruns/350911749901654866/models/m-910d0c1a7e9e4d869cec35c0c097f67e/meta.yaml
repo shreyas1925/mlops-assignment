@@ -1,4 +1,4 @@
-artifact_location: file:///Users/sshetti2/Desktop/mlops_assignment/artifacts/mlruns/350911749901654866/models/m-910d0c1a7e9e4d869cec35c0c097f67e/artifacts
+artifact_location: file:///mlruns/350911749901654866/models/m-910d0c1a7e9e4d869cec35c0c097f67e/artifacts
 creation_timestamp: 1778311291301
 experiment_id: '350911749901654866'
 last_updated_timestamp: 1778311294899

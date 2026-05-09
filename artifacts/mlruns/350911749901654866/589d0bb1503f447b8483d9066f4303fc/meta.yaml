@@ -1,4 +1,4 @@
-artifact_uri: file:///Users/sshetti2/Desktop/mlops_assignment/artifacts/mlruns/350911749901654866/589d0bb1503f447b8483d9066f4303fc/artifacts
+artifact_uri: file:///mlruns/350911749901654866/589d0bb1503f447b8483d9066f4303fc/artifacts
 end_time: 1778311294904
 entry_point_name: ''
 experiment_id: '350911749901654866'

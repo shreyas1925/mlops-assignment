@@ -23,6 +23,31 @@ from settings import (
 )
 
 
+def _make_mlruns_portable(mlruns_dir) -> None:
+    """Rewrite absolute host paths in MLflow tracking files to a container-portable URI.
+
+    MLflow records the absolute filesystem URI of the tracking dir inside meta.yaml/MLmodel
+    files, which breaks the dockerized MLflow UI (it mounts mlruns at /mlruns). We rewrite
+    every occurrence of the host path to file:///mlruns so the same artifacts work locally
+    and inside the container without re-training.
+    """
+    host_uri = mlruns_dir.resolve().as_uri()
+    container_uri = "file:///mlruns"
+    if host_uri == container_uri:
+        return
+    for meta_path in mlruns_dir.rglob("*"):
+        if not meta_path.is_file():
+            continue
+        if meta_path.name not in {"meta.yaml", "MLmodel"}:
+            continue
+        try:
+            text = meta_path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        if host_uri in text:
+            meta_path.write_text(text.replace(host_uri, container_uri), encoding="utf-8")
+
+
 def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -48,6 +73,7 @@ def main() -> None:
         metrics_output_path=TRAIN_METRICS_FILE,
         mlruns_dir=MLRUNS_DIR,
     )
+    _make_mlruns_portable(MLRUNS_DIR)
     logging.info("Training pipeline complete. Selected model: %s", train_results["selected_model"])
 
 

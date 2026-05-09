@@ -17,8 +17,9 @@ services:
   # if the download fails (no releases yet, offline), the api falls back
   # to the model committed in the repo, so the stack always comes up.
   model-puller:
-    image: docker.io/curlimages/curl:8.10.1
+    image: docker.io/alpine:3.20
     container_name: heart-model-puller
+    user: "0:0"
     environment:
       GITHUB_REPO: shreyas1925/mlops-assignment
       MODEL_ASSET_NAME: heart_disease_pipeline.joblib
@@ -28,6 +29,7 @@ services:
     command:
       - |
         set -e
+        apk add --no-cache --quiet curl ca-certificates >/dev/null
         echo "[model-puller] Looking up latest release for $$GITHUB_REPO ..."
         DOWNLOAD_URL="$$(
           curl -fsSL "https://api.github.com/repos/$$GITHUB_REPO/releases/latest" 2>/dev/null \

@@ -1,4 +1,4 @@
-artifact_path: file:///Users/sshetti2/Desktop/mlops_assignment/artifacts/mlruns/350911749901654866/models/m-3d3f6e249b7844e4b4363fea7745fafa/artifacts
+artifact_path: file:///mlruns/350911749901654866/models/m-3d3f6e249b7844e4b4363fea7745fafa/artifacts
 flavors:
   python_function:
     env:
