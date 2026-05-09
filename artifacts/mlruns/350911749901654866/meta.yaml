@@ -1,0 +1,6 @@
+artifact_location: file:///Users/sshetti2/Desktop/mlops_assignment/artifacts/mlruns/350911749901654866
+creation_time: 1778311290488
+experiment_id: '350911749901654866'
+last_update_time: 1778311290488
+lifecycle_stage: active
+name: heart-disease-uci

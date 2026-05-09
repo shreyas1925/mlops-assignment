@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, master]
 
+permissions:
+  contents: write  # required for creating releases on master
+
 jobs:
   lint-test-train:
     runs-on: ubuntu-latest
@@ -28,23 +31,37 @@ jobs:
           pip install -r requirements.txt
 
       - name: Lint
-        run: |
-          ruff check .
+        run: ruff check .
 
       - name: Test
-        run: |
-          pytest -q
+        run: pytest -q
 
       - name: Run training pipeline
-        run: |
-          python scripts/run_training_pipeline.py
+        run: python -m pipeline
 
-      - name: Upload artifacts
+      - name: Upload artifacts (workflow run)
         uses: actions/upload-artifact@v4
         with:
-          name: training-artifacts
+          name: training-artifacts-${{ github.run_number }}
           path: |
             artifacts/models
             artifacts/reports
             artifacts/mlruns
 
+      # Publishing a GitHub Release on master gives the local
+      # `model-puller` compose service a stable, public URL to fetch the
+      # latest model from. This is the local-friendly analogue of Cloud
+      # Build pushing to Artifact Registry / GCS.
+      - name: Publish model release (master only)
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: model-${{ github.run_number }}
+          name: "Model build ${{ github.run_number }}"
+          body: |
+            Automated model release from CI run #${{ github.run_number }}.
+
+            Commit: ${{ github.sha }}
+          files: |
+            artifacts/models/heart_disease_pipeline.joblib
+            artifacts/reports/training_metrics.json

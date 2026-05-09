@@ -42,3 +42,40 @@ def test_predict_endpoint_returns_prediction(monkeypatch):
     assert body["prediction"] in [0, 1]
     assert 0 <= body["confidence"] <= 1
 
+
+def test_health_and_metrics_endpoints(monkeypatch):
+    monkeypatch.setattr("api.main._load_model", lambda: DummyModel())
+    app = create_app()
+    client = TestClient(app)
+
+    health = client.get("/health")
+    assert health.status_code == 200
+    assert health.json()["status"] == "ok"
+
+    metrics = client.get("/metrics")
+    assert metrics.status_code == 200
+    assert "api_requests_total" in metrics.text
+
+
+def test_predict_endpoint_validation(monkeypatch):
+    monkeypatch.setattr("api.main._load_model", lambda: DummyModel())
+    app = create_app()
+    client = TestClient(app)
+    invalid_payload = {
+        "age": -1,
+        "sex": 1,
+        "cp": 1,
+        "trestbps": 145,
+        "chol": 233,
+        "fbs": 1,
+        "restecg": 2,
+        "thalach": 150,
+        "exang": 0,
+        "oldpeak": 2.3,
+        "slope": 3,
+        "ca": 0,
+        "thal": 6,
+    }
+    response = client.post("/predict", json=invalid_payload)
+    assert response.status_code == 422
+

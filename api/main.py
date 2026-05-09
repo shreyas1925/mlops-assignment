@@ -13,8 +13,8 @@ from fastapi.responses import PlainTextResponse
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
 
-from heart_disease_mlops.features import CATEGORICAL_FEATURES, NUMERIC_FEATURES
-from heart_disease_mlops.settings import MODEL_FILE
+from features import CATEGORICAL_FEATURES, NUMERIC_FEATURES
+from settings import MODEL_FILE
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,7 +54,7 @@ def _load_model():
     if not model_path.exists():
         raise FileNotFoundError(
             f"Model file not found at {model_path}. "
-            "Train first with scripts/run_training_pipeline.py"
+            "Train first with: PYTHONPATH=src python -m pipeline"
         )
     LOGGER.info("Loading model from %s", model_path)
     return joblib.load(model_path)

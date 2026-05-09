@@ -1,0 +1,10 @@
+artifact_location: file:///Users/sshetti2/Desktop/mlops_assignment/artifacts/mlruns/350911749901654866/models/m-3d3f6e249b7844e4b4363fea7745fafa/artifacts
+creation_timestamp: 1778311303499
+experiment_id: '350911749901654866'
+last_updated_timestamp: 1778311306475
+model_id: m-3d3f6e249b7844e4b4363fea7745fafa
+model_type: null
+name: model
+source_run_id: eb918991db624429bbab4c89d4f7f258
+status: 2
+status_message: null

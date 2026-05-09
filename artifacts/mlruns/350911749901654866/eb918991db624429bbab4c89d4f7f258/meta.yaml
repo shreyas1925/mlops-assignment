@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/sshetti2/Desktop/mlops_assignment/artifacts/mlruns/350911749901654866/eb918991db624429bbab4c89d4f7f258/artifacts
+end_time: 1778311306479
+entry_point_name: ''
+experiment_id: '350911749901654866'
+lifecycle_stage: active
+run_id: eb918991db624429bbab4c89d4f7f258
+run_name: random_forest
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1778311294907
+status: 3
+tags: []
+user_id: sshetti2

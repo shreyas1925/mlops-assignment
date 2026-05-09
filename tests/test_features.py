@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from heart_disease_mlops.features import build_preprocessor
+from features import build_preprocessor
 
 
 def test_build_preprocessor_has_two_transformer_groups():

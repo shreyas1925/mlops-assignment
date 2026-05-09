@@ -1,2 +1,0 @@
-"""Heart disease MLOps package."""
-

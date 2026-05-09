@@ -1,0 +1,129 @@
+# One-command local stack for the heart-disease MLOps demo.
+#
+#   podman compose up -d
+#
+# Services:
+#   - model-puller : downloads the latest model from GitHub Releases
+#   - api          : FastAPI service exposing /predict, /health, /metrics
+#   - mlflow       : MLflow tracking UI for experiment history
+#   - prometheus   : scrapes the api for metrics
+#   - alertmanager : routes alerts fired by prometheus rules
+#   - grafana      : dashboards for api request rate and latency
+
+services:
+
+  # Downloads the latest published model from GitHub Releases into the
+  # shared artifacts/models volume before the api starts. Best-effort:
+  # if the download fails (no releases yet, offline), the api falls back
+  # to the model committed in the repo, so the stack always comes up.
+  model-puller:
+    image: docker.io/curlimages/curl:8.10.1
+    container_name: heart-model-puller
+    environment:
+      GITHUB_REPO: shreyas1925/mlops-assignment
+      MODEL_ASSET_NAME: heart_disease_pipeline.joblib
+    volumes:
+      - ./artifacts/models:/out
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        echo "[model-puller] Looking up latest release for $$GITHUB_REPO ..."
+        DOWNLOAD_URL="$$(
+          curl -fsSL "https://api.github.com/repos/$$GITHUB_REPO/releases/latest" 2>/dev/null \
+            | grep browser_download_url \
+            | grep "$$MODEL_ASSET_NAME" \
+            | head -n 1 \
+            | cut -d '"' -f 4
+        )" || true
+        if [ -z "$$DOWNLOAD_URL" ]; then
+          echo "[model-puller] No release model found. API will use the committed fallback model."
+          exit 0
+        fi
+        echo "[model-puller] Downloading $$DOWNLOAD_URL"
+        curl -fsSL "$$DOWNLOAD_URL" -o "/out/$$MODEL_ASSET_NAME.tmp"
+        mv "/out/$$MODEL_ASSET_NAME.tmp" "/out/$$MODEL_ASSET_NAME"
+        echo "[model-puller] Model refreshed at /out/$$MODEL_ASSET_NAME"
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: heart-disease-api:latest
+    container_name: heart-disease-api
+    depends_on:
+      model-puller:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
+    volumes:
+      # Model is mounted (not baked into the image) so model-puller or a
+      # local retraining run can swap it without rebuilding the image.
+      - ./artifacts/models:/app/artifacts/models:ro
+    environment:
+      MODEL_PATH: /app/artifacts/models/heart_disease_pipeline.joblib
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  mlflow:
+    image: docker.io/python:3.11-slim
+    container_name: heart-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./artifacts/mlruns:/mlruns
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        pip install --quiet --no-cache-dir 'mlflow==2.16.2' &&
+        exec mlflow ui --backend-store-uri file:///mlruns --host 0.0.0.0 --port 5000
+    restart: unless-stopped
+
+  prometheus:
+    image: docker.io/prom/prometheus:v2.53.0
+    container_name: heart-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-lifecycle
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  alertmanager:
+    image: docker.io/prom/alertmanager:v0.27.0
+    container_name: heart-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+    restart: unless-stopped
+
+  grafana:
+    image: docker.io/grafana/grafana-oss:11.1.4
+    container_name: heart-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped

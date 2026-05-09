@@ -9,6 +9,7 @@ __pycache__/
 !.env.example
 
 # Generated artifacts
-artifacts/
+artifacts/.cache/
+artifacts/.matplotlib/
 
 .venv

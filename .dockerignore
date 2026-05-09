@@ -2,7 +2,9 @@
 .venv
 __pycache__
 *.pyc
-artifacts/mlruns
+artifacts
 tests
-docs
-
+screenshots
+.github
+.pytest_cache
+.ruff_cache
