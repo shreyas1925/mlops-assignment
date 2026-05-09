@@ -37,7 +37,12 @@ jobs:
         run: pytest -q
 
       - name: Run training pipeline
-        run: python -m pipeline
+        run: |
+          # MLflow embeds absolute filesystem paths in meta.yaml. The committed
+          # mlruns/ snapshot has macOS paths that fail on Ubuntu, so CI starts
+          # with a clean slate and regenerates the experiment from scratch.
+          rm -rf artifacts/mlruns
+          python -m pipeline
 
       - name: Upload artifacts (workflow run)
         uses: actions/upload-artifact@v4
