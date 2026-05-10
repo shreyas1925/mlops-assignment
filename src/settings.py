@@ -27,3 +27,5 @@ TRAIN_METRICS_FILE = Path(
 MODEL_FILE = Path(
     os.getenv("MODEL_FILE", str(MODELS_DIR / "heart_disease_pipeline.joblib"))
 )
+
+print("Added log for demo")
